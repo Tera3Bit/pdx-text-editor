@@ -21,7 +21,7 @@ codegen-units = 1
 
 [package.metadata.packager]
 before-packaging-command = "cargo build --release"
-formats = ["msi", "nsis", "deb", "dmg"] 
+formats = ["wix", "nsis", "deb", "dmg"]
 # icons = ["icons/32x32.png", "icons/128x128.png"]
 product_name = "PDX Editor"
 identifier = "com.terabit.pdxeditor"
