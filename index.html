@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PDX Text Editor - Text-first documents. Finally. A modern alternative to PDF with real editable text.">
+    <title>PDX Text Editor - Text-first documents. Finally.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #0a0a0a;
+            --color-text: #e8e8e8;
+            --color-accent: #00ff88;
+            --color-accent-dim: #00cc6a;
+            --color-secondary: #ff3366;
+            --color-surface: #1a1a1a;
+            --color-surface-hover: #252525;
+            --color-border: #333333;
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-mono);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Background Grid Animation */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--color-border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.15;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Floating Accent Elements */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 10%;
+            right: 5%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--color-accent) 0%, transparent 70%);
+            opacity: 0.08;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 12s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-50px) scale(1.1); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--color-border);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.8);
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            display: inline-block;
+            position: relative;
+        }
+
+        .logo::after {
+            content: '▮';
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 4rem 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-label {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--color-surface);
+            border: 1px solid var(--color-accent);
+            color: var(--color-accent);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 2rem;
+            font-weight: 700;
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 10vw, 7rem);
+            font-weight: 800;
+            line-height: 0.95;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: -0.03em;
+            animation: slideInUp 0.8s ease-out 0.2s backwards;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 .accent {
+            color: var(--color-accent);
+            display: block;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.25rem, 3vw, 2rem);
+            margin-bottom: 2rem;
+            color: var(--color-accent);
+            font-weight: 700;
+            animation: slideInUp 0.8s ease-out 0.4s backwards;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            max-width: 600px;
+            line-height: 1.8;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            animation: fadeIn 1s ease-out 0.6s backwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .hero-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 2rem;
+            align-items: center;
+            padding: 2rem;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            margin-bottom: 3rem;
+            animation: slideInUp 0.8s ease-out 0.8s backwards;
+        }
+
+        .comparison-item {
+            text-align: center;
+        }
+
+        .comparison-label {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            opacity: 0.6;
+        }
+
+        .comparison-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: var(--font-display);
+        }
+
+        .comparison-item.old .comparison-value {
+            color: var(--color-secondary);
+            text-decoration: line-through;
+        }
+
+        .comparison-item.new .comparison-value {
+            color: var(--color-accent);
+        }
+
+        .comparison-vs {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-border);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            animation: fadeIn 1s ease-out 1s backwards;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            border: 2px solid;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: var(--color-bg);
+            border-color: var(--color-accent);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--color-accent-dim);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn-primary:hover::before {
+            left: 0;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--color-text);
+            border-color: var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-surface);
+            border-color: var(--color-accent);
+            color: var(--color-accent);
+        }
+
+        /* Section Styles */
+        section {
+            padding: 8rem 0;
+            position: relative;
+        }
+
+        section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100vw;
+            height: 1px;
+            background: var(--color-border);
+        }
+
+        .section-header {
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--color-accent);
+            color: var(--color-bg);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        .section-description {
+            font-size: 1.1rem;
+            max-width: 700px;
+            opacity: 0.9;
+            line-height: 1.8;
+        }
+
+        /* What is PDX Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--color-accent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: var(--color-surface-hover);
+            border-color: var(--color-accent);
+            transform: translateY(-5px);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .feature-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--color-accent);
+        }
+
+        .feature-description {
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        /* Why PDX Section */
+        .benefits-list {
+            list-style: none;
+            margin-top: 3rem;
+            max-width: 800px;
+        }
+
+        .benefits-list li {
+            padding: 1.5rem;
+            background: var(--color-surface);
+            border-left: 3px solid var(--color-accent);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+        }
+
+        .benefits-list li::before {
+            content: '▸';
+            color: var(--color-accent);
+            font-weight: 700;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .benefits-list li:hover {
+            background: var(--color-surface-hover);
+            border-left-width: 6px;
+            padding-left: 1.25rem;
+        }
+
+        /* Editor Section */
+        .editor-showcase {
+            margin-top: 3rem;
+            padding: 3rem;
+            background: var(--color-surface);
+            border: 2px solid var(--color-accent);
+            position: relative;
+        }
+
+        .editor-showcase::before {
+            content: 'PREVIEW';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            background: var(--color-accent);
+            color: var(--color-bg);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+
+        .editor-window {
+            background: #1a1a1a;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #0f0f0f;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .editor-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--color-border);
+        }
+
+        .editor-dot:nth-child(1) { background: #ff5f57; }
+        .editor-dot:nth-child(2) { background: #ffbd2e; }
+        .editor-dot:nth-child(3) { background: #28ca42; }
+
+        .editor-content {
+            padding: 2rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.8;
+        }
+
+        .editor-content .line {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .editor-content .line::before {
+            content: '>';
+            color: var(--color-accent);
+            margin-right: 0.5rem;
+            opacity: 0.5;
+        }
+
+        /* Open Source Section */
+        .opensource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .opensource-card {
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--color-surface) 0%, #151515 100%);
+            border: 1px solid var(--color-border);
+            text-align: center;
+        }
+
+        .opensource-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--color-accent);
+        }
+
+        .opensource-card p {
+            opacity: 0.8;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Language Support */
+        .language-badges {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .language-badge {
+            padding: 0.75rem 1.5rem;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .language-badge.primary {
+            border-color: var(--color-accent);
+        }
+
+        .language-badge .status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--color-accent);
+            color: var(--color-bg);
+            font-weight: 700;
+        }
+
+        .language-badge.partial .status {
+            background: #ffbd2e;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4rem 0 2rem;
+            border-top: 1px solid var(--color-border);
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--color-accent);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .footer-tagline {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--color-text);
+            text-decoration: none;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--color-accent);
+        }
+
+        .footer-copyright {
+            font-size: 0.75rem;
+            opacity: 0.5;
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1.5rem;
+            }
+
+            .hero {
+                min-height: auto;
+                padding: 3rem 0;
+            }
+
+            .hero-comparison {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .comparison-vs {
+                transform: rotate(90deg);
+            }
+
+            section {
+                padding: 4rem 0;
+            }
+
+            .features-grid,
+            .opensource-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                text-align: center;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Scroll Animation Observer */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">PDX</div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <span class="hero-label">Open Source Project</span>
+                    <h1>
+                        PDX Text
+                        <span class="accent">Editor</span>
+                    </h1>
+                    <p class="hero-subtitle">Text-first documents. Finally.</p>
+                    <p class="hero-description">
+                        PDX is a modern alternative to PDF editors. Unlike PDF, which renders documents 
+                        as canvas-based images, PDX works with real, editable text. Designed for everyone 
+                        who uses PDFs but wants a faster, simpler, and more editable experience.
+                    </p>
+
+                    <div class="hero-comparison">
+                        <div class="comparison-item old">
+                            <div class="comparison-label">Old Way</div>
+                            <div class="comparison-value">PDF Canvas</div>
+                        </div>
+                        <div class="comparison-vs">VS</div>
+                        <div class="comparison-item new">
+                            <div class="comparison-label">New Way</div>
+                            <div class="comparison-value">PDX Text</div>
+                        </div>
+                    </div>
+
+                    <div class="cta-buttons">
+                        <a href="https://github.com/your-username/pdx-editor" class="btn btn-primary" target="_blank">View on GitHub</a>
+                        <a href="#what-is-pdx" class="btn btn-secondary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- What is PDX Section -->
+        <section id="what-is-pdx" class="fade-in-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Overview</span>
+                    <h2 class="section-title">What is PDX?</h2>
+                    <p class="section-description">
+                        PDX is a text-first document format and editor that puts real, editable text 
+                        at the core. No more fighting with canvas-based layouts or struggling to edit 
+                        "PDF documents". PDX is designed to replace the pain of PDF editing with a clean, 
+                        simple, and powerful alternative.
+                    </p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">📝</span>
+                        <h3 class="feature-title">Text-First</h3>
+                        <p class="feature-description">
+                            Real text, not rendered pixels. Edit, search, and manipulate text 
+                            the way you'd expect in a modern editor.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">✏️</span>
+                        <h3 class="feature-title">Fully Editable</h3>
+                        <p class="feature-description">
+                            Every element is editable. No locked layouts, no conversion headaches. 
+                            Just pure, editable content.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">🚫</span>
+                        <h3 class="feature-title">Not Canvas-Based</h3>
+                        <p class="feature-description">
+                            Unlike PDF, PDX doesn't render to canvas. It's structured, semantic 
+                            text that remains accessible and editable.
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="feature-icon">🎯</span>
+                        <h3 class="feature-title">PDF Replacement</h3>
+                        <p class="feature-description">
+                            Designed specifically to replace the frustration of PDF editing with 
+                            a modern, user-friendly approach.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Why PDX Section -->
+        <section id="why-pdx" class="fade-in-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Benefits</span>
+                    <h2 class="section-title">Why PDX?</h2>
+                    <p class="section-description">
+                        PDX brings together the best of document editing with the simplicity 
+                        you deserve. Here's why you should choose PDX over traditional PDF editors.
+                    </p>
+                </div>
+
+                <ul class="benefits-list">
+                    <li>Real text, not canvas - Edit documents like you edit code or plain text</li>
+                    <li>Built-in editor application - No need for separate tools or complex software</li>
+                    <li>Open-source - Community-driven, transparent, and free forever</li>
+                    <li>Fast and lightweight - No bloat, no unnecessary features, just what you need</li>
+                    <li>Easy to edit and share - Simple file format that works everywhere</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Editor Application Section -->
+        <section id="editor-app" class="fade-in-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Application</span>
+                    <h2 class="section-title">Editor Application</h2>
+                    <p class="section-description">
+                        PDX is more than just a file format - it's a complete application. The built-in 
+                        editor provides a seamless workflow for creating, editing, and managing your documents. 
+                        No plugins, no extensions, no hassle.
+                    </p>
+                </div>
+
+                <div class="editor-showcase">
+                    <div class="editor-window">
+                        <div class="editor-header">
+                            <span class="editor-dot"></span>
+                            <span class="editor-dot"></span>
+                            <span class="editor-dot"></span>
+                        </div>
+                        <div class="editor-content">
+                            <span class="line"># Welcome to PDX Editor</span>
+                            <span class="line"></span>
+                            <span class="line">This is a text-first document.</span>
+                            <span class="line">No canvas rendering, just pure text.</span>
+                            <span class="line"></span>
+                            <span class="line">## Features</span>
+                            <span class="line">- Real-time preview</span>
+                            <span class="line">- Split view editing</span>
+                            <span class="line">- Multiple themes</span>
+                            <span class="line">- Arabic support (RTL)</span>
+                            <span class="line"></span>
+                            <span class="line">Edit, preview, and export in one place.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Open Source Section -->
+        <section id="open-source" class="fade-in-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Community</span>
+                    <h2 class="section-title">Open Source</h2>
+                    <p class="section-description">
+                        PDX is completely open source. We believe in transparency, collaboration, 
+                        and building software that belongs to everyone. Join us in making document 
+                        editing better for everyone.
+                    </p>
+                </div>
+
+                <div class="opensource-grid">
+                    <div class="opensource-card">
+                        <h3>Contribute</h3>
+                        <p>
+                            Help build the future of document editing. Contributions of all kinds 
+                            are welcome - code, documentation, design, and feedback.
+                        </p>
+                        <a href="https://github.com/your-username/pdx-editor" class="btn btn-primary" target="_blank">
+                            View on GitHub
+                        </a>
+                    </div>
+
+                    <div class="opensource-card">
+                        <h3>License</h3>
+                        <p>
+                            PDX is released under the MIT License. Free to use, modify, and distribute 
+                            for any purpose, commercial or personal.
+                        </p>
+                        <a href="https://github.com/your-username/pdx-editor/blob/main/LICENSE" class="btn btn-secondary" target="_blank">
+                            Read License
+                        </a>
+                    </div>
+
+                    <div class="opensource-card">
+                        <h3>Roadmap</h3>
+                        <p>
+                            See what we're working on and what's coming next. Your feedback helps 
+                            shape the future of PDX.
+                        </p>
+                        <a href="https://github.com/your-username/pdx-editor/issues" class="btn btn-secondary" target="_blank">
+                            View Issues
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Language Support Section -->
+        <section id="languages" class="fade-in-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">Internationalization</span>
+                    <h2 class="section-title">Language Support</h2>
+                    <p class="section-description">
+                        PDX supports multiple languages with proper text rendering and directionality. 
+                        English is the primary language, with Arabic partially supported including 
+                        right-to-left (RTL) text direction.
+                    </p>
+                </div>
+
+                <div class="language-badges">
+                    <div class="language-badge primary">
+                        <span>🇬🇧 English</span>
+                        <span class="status">Full Support</span>
+                    </div>
+                    <div class="language-badge partial">
+                        <span>🇸🇦 Arabic</span>
+                        <span class="status">Partial</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">PDX</div>
+                <p class="footer-tagline">Text-first documents. Finally.</p>
+                
+                <div class="footer-links">
+                    <a href="https://github.com/your-username/pdx-editor" target="_blank">GitHub</a>
+                    <a href="https://github.com/your-username/pdx-editor/issues" target="_blank">Issues</a>
+                    <a href="https://github.com/your-username/pdx-editor/blob/main/LICENSE" target="_blank">License</a>
+                </div>
+
+                <p class="footer-copyright">
+                    © 2025 PDX Text Editor. Open source under MIT License.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in-section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
