@@ -1,0 +1,19 @@
+[package]
+name = "pdx-editor"
+version = "0.1.0"
+edition = "2021"
+authors = ["PDX Team"]
+description = "Next generation document format - editable, semantic, and multilingual"
+
+[dependencies]
+eframe = "0.30"
+egui = "0.30"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rfd = "0.15"
+chrono = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
