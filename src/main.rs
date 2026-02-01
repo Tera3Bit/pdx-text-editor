@@ -5,6 +5,10 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
+use crate::pdx_text::pdx_text;
+
+mod pdx_text;
+
 // ============================================================================
 // Core Data Structures
 // ============================================================================
@@ -34,7 +38,7 @@ impl Default for Metadata {
         Self {
             title: "Untitled Document".to_string(),
             author: String::new(),
-            language: "ar".to_string(),
+            language: "en".to_string(),
             created: chrono::Local::now().to_string(),
             modified: chrono::Local::now().to_string(),
             keywords: Vec::new(),
@@ -52,15 +56,14 @@ impl Default for StyleSheet {
     fn default() -> Self {
         let mut styles = HashMap::new();
 
-        // Default styles
         styles.insert(
             "heading1".to_string(),
             Style {
-                font_size: 24.0,
+                font_size: 28.0,
                 font_weight: FontWeight::Bold,
                 color: Color::rgb(0, 0, 0),
                 text_align: TextAlign::Start,
-                margin: EdgeInsets::new(0.0, 0.0, 16.0, 0.0),
+                margin: EdgeInsets::new(12.0, 0.0, 16.0, 0.0),
                 ..Default::default()
             },
         );
@@ -68,11 +71,11 @@ impl Default for StyleSheet {
         styles.insert(
             "heading2".to_string(),
             Style {
-                font_size: 20.0,
+                font_size: 22.0,
                 font_weight: FontWeight::Bold,
                 color: Color::rgb(40, 40, 40),
                 text_align: TextAlign::Start,
-                margin: EdgeInsets::new(0.0, 0.0, 12.0, 0.0),
+                margin: EdgeInsets::new(10.0, 0.0, 12.0, 0.0),
                 ..Default::default()
             },
         );
@@ -80,12 +83,12 @@ impl Default for StyleSheet {
         styles.insert(
             "paragraph".to_string(),
             Style {
-                font_size: 14.0,
+                font_size: 16.0,
                 font_weight: FontWeight::Normal,
                 color: Color::rgb(0, 0, 0),
                 text_align: TextAlign::Start,
-                line_height: 1.5,
-                margin: EdgeInsets::new(0.0, 0.0, 8.0, 0.0),
+                line_height: 1.8,
+                margin: EdgeInsets::new(0.0, 0.0, 10.0, 0.0),
                 ..Default::default()
             },
         );
@@ -93,11 +96,11 @@ impl Default for StyleSheet {
         styles.insert(
             "arabic".to_string(),
             Style {
-                font_size: 16.0,
+                font_size: 18.0,
                 font_weight: FontWeight::Normal,
                 color: Color::rgb(0, 0, 0),
                 text_align: TextAlign::Start,
-                line_height: 1.8,
+                line_height: 2.0,
                 direction: Direction::RTL,
                 ..Default::default()
             },
@@ -256,7 +259,7 @@ pub struct TextRun {
 
 impl TextRun {
     pub fn new(text: &str, language: &str, style: &str) -> Self {
-        let direction = if language == "ar" {
+        let direction = if language == "ar" || language == "fa" || language == "ur" {
             Direction::RTL
         } else {
             Direction::LTR
@@ -277,9 +280,7 @@ pub struct ListItem {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct Resources {
-    // Font references, images, etc.
-}
+pub struct Resources {}
 
 // ============================================================================
 // Theme System
@@ -287,9 +288,10 @@ pub struct Resources {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum AppTheme {
-    Light,
     Dark,
+    Light,
     Sepia,
+    Midnight,
 }
 
 impl AppTheme {
@@ -298,6 +300,7 @@ impl AppTheme {
             AppTheme::Light => egui::Color32::from_rgb(20, 20, 20),
             AppTheme::Dark => egui::Color32::from_rgb(230, 230, 230),
             AppTheme::Sepia => egui::Color32::from_rgb(60, 50, 40),
+            AppTheme::Midnight => egui::Color32::from_rgb(200, 210, 230),
         }
     }
 
@@ -306,6 +309,7 @@ impl AppTheme {
             AppTheme::Light => egui::Color32::from_rgb(250, 250, 250),
             AppTheme::Dark => egui::Color32::from_rgb(30, 30, 35),
             AppTheme::Sepia => egui::Color32::from_rgb(245, 235, 215),
+            AppTheme::Midnight => egui::Color32::from_rgb(15, 20, 35),
         }
     }
 
@@ -314,28 +318,28 @@ impl AppTheme {
             AppTheme::Light => egui::Color32::from_rgb(255, 255, 255),
             AppTheme::Dark => egui::Color32::from_rgb(40, 40, 45),
             AppTheme::Sepia => egui::Color32::from_rgb(255, 248, 235),
+            AppTheme::Midnight => egui::Color32::from_rgb(25, 30, 50),
         }
     }
 
     fn apply(&self, ctx: &egui::Context) {
-        let mut visuals = egui::Visuals::default();
-        
-        match self {
-            AppTheme::Light => {
-                visuals = egui::Visuals::light();
-                visuals.override_text_color = Some(self.text_color());
-            }
-            AppTheme::Dark => {
-                visuals = egui::Visuals::dark();
-                visuals.override_text_color = Some(self.text_color());
-            }
-            AppTheme::Sepia => {
-                visuals = egui::Visuals::light();
-                visuals.override_text_color = Some(self.text_color());
-                visuals.panel_fill = self.panel_color();
-                visuals.window_fill = self.panel_color();
-                visuals.extreme_bg_color = self.background_color();
-            }
+        let mut visuals = match self {
+            AppTheme::Light => egui::Visuals::light(),
+            AppTheme::Dark => egui::Visuals::dark(),
+            AppTheme::Sepia => egui::Visuals::light(),
+            AppTheme::Midnight => egui::Visuals::dark(),
+        };
+
+        visuals.override_text_color = Some(self.text_color());
+        visuals.panel_fill = self.panel_color();
+        visuals.window_fill = self.panel_color();
+        visuals.extreme_bg_color = self.background_color();
+
+        if matches!(self, AppTheme::Midnight) {
+            visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(35, 40, 60);
+            visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(40, 45, 65);
+            visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(50, 60, 85);
+            visuals.widgets.active.bg_fill = egui::Color32::from_rgb(60, 70, 100);
         }
 
         ctx.set_visuals(visuals);
@@ -343,9 +347,10 @@ impl AppTheme {
 
     fn name(&self) -> &str {
         match self {
-            AppTheme::Light => "Light",
             AppTheme::Dark => "Dark",
+            AppTheme::Light => "Light",
             AppTheme::Sepia => "Sepia",
+            AppTheme::Midnight => "Midnight",
         }
     }
 }
@@ -374,13 +379,9 @@ struct PdxApp {
     mode: EditorMode,
     active_tab: EditorTab,
     theme: AppTheme,
-
-    // Editor state
     raw_content: String,
     show_stats: bool,
     zoom_level: f32,
-
-    // Status
     last_save: Option<String>,
     status_message: String,
 }
@@ -425,29 +426,32 @@ fn render_node(ui: &mut egui::Ui, node: &Node, styles: &StyleSheet, zoom: f32, t
 
             ui.add_space(style_def.margin.top * zoom);
 
-            // Check if any run is RTL
             let is_rtl = runs.iter().any(|r| r.direction == Direction::RTL);
 
             if is_rtl {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        for run in runs.iter().rev() {
+                            ui.label(
+                                RichText::new(&pdx_text(&run.text))
+                                    .size(size)
+                                    .color(text_color)
+                                    .strong(),
+                            );
+                        }
+                    });
+                });
+            } else {
+                ui.horizontal_wrapped(|ui| {
                     for run in runs {
                         ui.label(
-                            RichText::new(&run.text)
+                            RichText::new(&pdx_text(&run.text))
                                 .size(size)
                                 .color(text_color)
                                 .strong(),
                         );
                     }
                 });
-            } else {
-                for run in runs {
-                    ui.label(
-                        RichText::new(&run.text)
-                            .size(size)
-                            .color(text_color)
-                            .strong(),
-                    );
-                }
             }
 
             ui.add_space(style_def.margin.bottom * zoom);
@@ -459,29 +463,20 @@ fn render_node(ui: &mut egui::Ui, node: &Node, styles: &StyleSheet, zoom: f32, t
 
             ui.add_space(style_def.margin.top * zoom);
 
-            // Check if any run is RTL
             let is_rtl = runs.iter().any(|r| r.direction == Direction::RTL);
 
             if is_rtl {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                     ui.horizontal_wrapped(|ui| {
                         for run in runs.iter().rev() {
-                            ui.label(
-                                RichText::new(&run.text)
-                                    .size(size)
-                                    .color(text_color),
-                            );
+                            ui.label(RichText::new(&pdx_text(&run.text)).size(size).color(text_color));
                         }
                     });
                 });
             } else {
                 ui.horizontal_wrapped(|ui| {
                     for run in runs {
-                        ui.label(
-                            RichText::new(&run.text)
-                                .size(size)
-                                .color(text_color),
-                        );
+                        ui.label(RichText::new(&pdx_text(&run.text)).size(size).color(text_color));
                     }
                 });
             }
@@ -491,64 +486,81 @@ fn render_node(ui: &mut egui::Ui, node: &Node, styles: &StyleSheet, zoom: f32, t
 
         Node::List { ordered, items, .. } => {
             for (i, item) in items.iter().enumerate() {
-                // Check if any run is RTL
                 let is_rtl = item.content.iter().any(|r| r.direction == Direction::RTL);
 
                 if is_rtl {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                        ui.horizontal(|ui| {
+                        ui.horizontal_wrapped(|ui| {
                             for run in item.content.iter().rev() {
-                                ui.label(RichText::new(&run.text).size(14.0 * zoom).color(text_color));
+                                ui.label(
+                                    RichText::new(&pdx_text(&run.text))
+                                        .size(16.0 * zoom)
+                                        .color(text_color),
+                                );
                             }
-                            
+
                             let marker = if *ordered {
                                 format!(".{}", i + 1)
                             } else {
                                 "•".to_string()
                             };
-                            ui.label(RichText::new(marker).size(14.0 * zoom).color(text_color));
+                            ui.label(RichText::new(marker).size(16.0 * zoom).color(text_color));
                         });
                     });
                 } else {
-                    ui.horizontal(|ui| {
+                    ui.horizontal_wrapped(|ui| {
                         let marker = if *ordered {
                             format!("{}.", i + 1)
                         } else {
                             "•".to_string()
                         };
 
-                        ui.label(RichText::new(marker).size(14.0 * zoom).color(text_color));
+                        ui.label(RichText::new(marker).size(16.0 * zoom).color(text_color));
 
                         for run in &item.content {
-                            ui.label(RichText::new(&run.text).size(14.0 * zoom).color(text_color));
+                            ui.label(
+                                RichText::new(&pdx_text(&run.text))
+                                    .size(16.0 * zoom)
+                                    .color(text_color),
+                            );
                         }
                     });
                 }
             }
-            ui.add_space(8.0 * zoom);
+            ui.add_space(10.0 * zoom);
         }
 
         Node::CodeBlock { language, code, .. } => {
-            ui.add_space(8.0);
+            ui.add_space(10.0);
             ui.group(|ui| {
-                ui.label(RichText::new(language).size(10.0 * zoom).italics().color(text_color));
-                ui.label(RichText::new(code).size(12.0 * zoom).code().color(text_color));
+                ui.label(
+                    RichText::new(language)
+                        .size(11.0 * zoom)
+                        .italics()
+                        .color(text_color),
+                );
+                ui.label(
+                    RichText::new(code)
+                        .size(13.0 * zoom)
+                        .code()
+                        .color(text_color),
+                );
             });
-            ui.add_space(8.0);
+            ui.add_space(10.0);
         }
 
         Node::Divider => {
-            ui.add_space(8.0);
+            ui.add_space(10.0);
             ui.separator();
-            ui.add_space(8.0);
+            ui.add_space(10.0);
         }
 
         Node::PageBreak => {
-            ui.add_space(16.0);
+            ui.add_space(20.0);
             ui.separator();
             ui.label(RichText::new("— Page Break —").italics().weak());
             ui.separator();
-            ui.add_space(16.0);
+            ui.add_space(20.0);
         }
     }
 }
@@ -571,7 +583,7 @@ fn serialize_content(node: &Node) -> String {
                 .iter()
                 .map(|r| r.text.clone())
                 .collect::<Vec<_>>()
-                .join("");
+                .join(" ");
             format!("{} {}", prefix, text)
         }
 
@@ -579,7 +591,7 @@ fn serialize_content(node: &Node) -> String {
             .iter()
             .map(|r| r.text.clone())
             .collect::<Vec<_>>()
-            .join(""),
+            .join(" "),
 
         Node::List { ordered, items, .. } => items
             .iter()
@@ -595,7 +607,7 @@ fn serialize_content(node: &Node) -> String {
                     .iter()
                     .map(|r| r.text.clone())
                     .collect::<Vec<_>>()
-                    .join("");
+                    .join(" ");
                 format!("{} {}", marker, text)
             })
             .collect::<Vec<_>>()
@@ -606,7 +618,6 @@ fn serialize_content(node: &Node) -> String {
         }
 
         Node::Divider => "---".to_string(),
-
         Node::PageBreak => "===".to_string(),
     }
 }
@@ -624,19 +635,21 @@ fn parse_content(text: &str) -> Node {
             continue;
         }
 
-        // Heading
         if line.starts_with('#') {
             let level = line.chars().take_while(|&c| c == '#').count() as u8;
             let text = line.trim_start_matches('#').trim();
+            let is_arabic = text.chars().any(|c| c >= '\u{0600}' && c <= '\u{06FF}');
 
             children.push(Node::Heading {
                 level,
-                runs: vec![TextRun::new(text, "ar", "heading1")],
+                runs: vec![TextRun::new(
+                    text,
+                    if is_arabic { "ar" } else { "en" },
+                    &format!("heading{}", level),
+                )],
                 style: format!("heading{}", level),
             });
-        }
-        // Code block
-        else if line.starts_with("```") {
+        } else if line.starts_with("```") {
             let language = line.trim_start_matches('`').trim().to_string();
             let mut code_lines = Vec::new();
             i += 1;
@@ -655,17 +668,21 @@ fn parse_content(text: &str) -> Node {
                 code: code_lines.join("\n"),
                 style: "code".to_string(),
             });
-        }
-        // List item
-        else if line.starts_with('-') || line.starts_with("•") {
+        } else if line.starts_with('-') || line.starts_with("•") {
             let mut items = Vec::new();
 
             while i < lines.len() {
                 let line = lines[i].trim();
                 if line.starts_with('-') || line.starts_with("•") {
                     let text = line.trim_start_matches('-').trim_start_matches("•").trim();
+                    let is_arabic = text.chars().any(|c| c >= '\u{0600}' && c <= '\u{06FF}');
+
                     items.push(ListItem {
-                        content: vec![TextRun::new(text, "ar", "paragraph")],
+                        content: vec![TextRun::new(
+                            text,
+                            if is_arabic { "ar" } else { "en" },
+                            "paragraph",
+                        )],
                     });
                     i += 1;
                 } else {
@@ -679,20 +696,20 @@ fn parse_content(text: &str) -> Node {
                 style: "list".to_string(),
             });
             i -= 1;
-        }
-        // Divider
-        else if line == "---" {
+        } else if line == "---" {
             children.push(Node::Divider);
-        }
-        // Page break
-        else if line == "===" {
+        } else if line == "===" {
             children.push(Node::PageBreak);
-        }
-        // Paragraph
-        else {
+        } else {
+            let is_arabic = line.chars().any(|c| c >= '\u{0600}' && c <= '\u{06FF}');
+
             children.push(Node::Paragraph {
-                runs: vec![TextRun::new(line, "ar", "paragraph")],
-                style: "paragraph".to_string(),
+                runs: vec![TextRun::new(
+                    line,
+                    if is_arabic { "ar" } else { "en" },
+                    if is_arabic { "arabic" } else { "paragraph" },
+                )],
+                style: if is_arabic { "arabic" } else { "paragraph" }.to_string(),
             });
         }
 
@@ -700,6 +717,86 @@ fn parse_content(text: &str) -> Node {
     }
 
     Node::Document { children }
+}
+
+// ============================================================================
+// Export Functions
+// ============================================================================
+
+fn export_as_html(document: &PdxDocument) -> String {
+    let mut html = String::from(
+        r#"<!DOCTYPE html>
+<html dir="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>"#,
+    );
+    html.push_str(&document.metadata.title);
+    html.push_str(
+        r#"</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Noto Sans Arabic';
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.8;
+            direction: auto;
+        }
+        .rtl { direction: rtl; text-align: right; }
+        .ltr { direction: ltr; text-align: left; }
+        h1 { font-size: 28px; margin: 12px 0 16px; }
+        h2 { font-size: 22px; margin: 10px 0 12px; }
+        p { margin: 10px 0; font-size: 16px; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        hr { margin: 20px 0; border: none; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+"#,
+    );
+
+    fn node_to_html(node: &Node) -> String {
+        match node {
+            Node::Document { children } => children.iter().map(node_to_html).collect(),
+            Node::Heading { level, runs, .. } => {
+                let is_rtl = runs.iter().any(|r| r.direction == Direction::RTL);
+                let dir_class = if is_rtl { "rtl" } else { "ltr" };
+                let text: String = runs.iter().map(|r| r.text.clone()).collect();
+                format!("<h{} class=\"{}\">{}</h{}>\n", level, dir_class, text, level)
+            }
+            Node::Paragraph { runs, .. } => {
+                let is_rtl = runs.iter().any(|r| r.direction == Direction::RTL);
+                let dir_class = if is_rtl { "rtl" } else { "ltr" };
+                let text: String = runs.iter().map(|r| r.text.clone()).collect();
+                format!("<p class=\"{}\">{}</p>\n", dir_class, text)
+            }
+            Node::List { ordered, items, .. } => {
+                let tag = if *ordered { "ol" } else { "ul" };
+                let items_html: String = items
+                    .iter()
+                    .map(|item| {
+                        let is_rtl = item.content.iter().any(|r| r.direction == Direction::RTL);
+                        let dir_class = if is_rtl { "rtl" } else { "ltr" };
+                        let text: String = item.content.iter().map(|r| r.text.clone()).collect();
+                        format!("<li class=\"{}\">{}</li>", dir_class, text)
+                    })
+                    .collect();
+                format!("<{0}>{1}</{0}>\n", tag, items_html)
+            }
+            Node::CodeBlock { language, code, .. } => {
+                format!("<pre><code class=\"language-{}\">{}</code></pre>\n", language, code)
+            }
+            Node::Divider => "<hr/>\n".to_string(),
+            Node::PageBreak => "<hr style=\"border-top: 3px double #ddd;\"/>\n".to_string(),
+        }
+    }
+
+    html.push_str(&node_to_html(&document.content));
+    html.push_str("</body>\n</html>");
+    html
 }
 
 // ============================================================================
@@ -715,61 +812,74 @@ fn create_sample_document() -> PdxDocument {
             language: "en".to_string(),
             created: chrono::Local::now().to_string(),
             modified: chrono::Local::now().to_string(),
-            keywords: vec!["pdx".to_string(), "مستند".to_string()],        
+            keywords: vec!["pdx".to_string(), "document".to_string(), "مستند".to_string()],
         },
         styles: StyleSheet::default(),
         content: Node::Document {
             children: vec![
                 Node::Heading {
                     level: 1,
-                    runs: vec![TextRun::new("Welcome to PDX", "en", "heading1")],
+                    runs: vec![TextRun::new("Welcome to PDX Editor", "en", "heading1")],
                     style: "heading1".to_string(),
                 },
                 Node::Paragraph {
                     runs: vec![TextRun::new(
-                        "PDX is a modern document standard that combines the power of PDF with the ease of editing text documents.",
+                        "PDX is a modern document format that combines the power of PDF with the ease of editing text documents. It features full Arabic and RTL language support.",
                         "en",
-                        "paragraph"
+                        "paragraph",
                     )],
                     style: "paragraph".to_string(),
                 },
                 Node::Divider,
                 Node::Heading {
                     level: 2,
-                    runs: vec![TextRun::new("مرحباً بك في PDX", "ar", "heading2")],
+                    runs: vec![TextRun::new("مرحباً بك في محرر PDX", "ar", "heading2")],
                     style: "heading2".to_string(),
                 },
                 Node::Paragraph {
                     runs: vec![TextRun::new(
-                        "هذا المحرر يدعم اللغة العربية بشكل كامل مع دعم الكتابة من اليمين إلى اليسار.",
+                        "هذا المحرر يدعم اللغة العربية بشكل كامل مع الكتابة من اليمين إلى اليسار. يمكنك كتابة المستندات بالعربية بسهولة تامة.",
                         "ar",
-                        "arabic"
+                        "arabic",
                     )],
                     style: "arabic".to_string(),
                 },
                 Node::Divider,
                 Node::Heading {
                     level: 2,
-                    runs: vec![TextRun::new("Basic Features", "en", "heading2")],
+                    runs: vec![TextRun::new("Key Features", "en", "heading2")],
                     style: "heading2".to_string(),
                 },
                 Node::List {
                     ordered: false,
                     items: vec![
                         ListItem {
-                            content: vec![TextRun::new("Full support for Arabic and RTL text", "en", "paragraph")],
-                        },
-                        ListItem { 
-                            content: vec![TextRun::new("Editable semantic structure", "en", "paragraph")], 
-                        }, 
-                        ListItem { 
-                            content: vec![TextRun::new("Advanced style system", "en", "paragraph")], 
-                        }, 
-                        ListItem { 
-                            content: vec![TextRun::new("Small file size and high performance", "en", "paragraph")], 
+                            content: vec![TextRun::new(
+                                "Full support for Arabic and RTL text",
+                                "en",
+                                "paragraph",
+                            )],
                         },
                         ListItem {
-                            content: vec![TextRun::new("دعم كامل للغة العربية", "ar", "arabic")],
+                            content: vec![TextRun::new(
+                                "Four beautiful themes: Light, Dark, Midnight, and Sepia",
+                                "en",
+                                "paragraph",
+                            )],
+                        },
+                        ListItem {
+                            content: vec![TextRun::new(
+                                "Export to HTML, PDF, and images",
+                                "en",
+                                "paragraph",
+                            )],
+                        },
+                        ListItem {
+                            content: vec![TextRun::new(
+                                "Real-time preview with split mode",
+                                "en",
+                                "paragraph",
+                            )],
                         },
                     ],
                     style: "list".to_string(),
@@ -777,22 +887,66 @@ fn create_sample_document() -> PdxDocument {
                 Node::Divider,
                 Node::Heading {
                     level: 2,
-                    runs: vec![TextRun::new("Code Example", "en", "heading2")],
+                    runs: vec![TextRun::new("المميزات الرئيسية", "ar", "heading2")],
+                    style: "heading2".to_string(),
+                },
+                Node::List {
+                    ordered: false,
+                    items: vec![
+                        ListItem {
+                            content: vec![TextRun::new(
+                                "دعم كامل للغة العربية والكتابة من اليمين لليسار",
+                                "ar",
+                                "arabic",
+                            )],
+                        },
+                        ListItem {
+                            content: vec![TextRun::new(
+                                "أربعة ثيمات جميلة مع ثيم منتصف الليل الجديد",
+                                "ar",
+                                "arabic",
+                            )],
+                        },
+                        ListItem {
+                            content: vec![TextRun::new(
+                                "تصدير لصيغ متعددة: HTML، PDF، صور",
+                                "ar",
+                                "arabic",
+                            )],
+                        },
+                        ListItem {
+                            content: vec![TextRun::new(
+                                "معاينة مباشرة مع الوضع المقسم",
+                                "ar",
+                                "arabic",
+                            )],
+                        },
+                    ],
+                    style: "list".to_string(),
+                },
+                Node::Divider,
+                Node::Heading {
+                    level: 2,
+                    runs: vec![TextRun::new("Code Example - مثال الكود", "en", "heading2")],
                     style: "heading2".to_string(),
                 },
                 Node::CodeBlock {
                     language: "rust".to_string(),
                     code: r#"fn main() {
-    println!("Hello, PDX!");
-    println!("مرحباً!");
-}"#.to_string(),
+    // English
+    println!("Hello, World!");
+    
+    // العربية  
+    println!("مرحباً بالعالم!");
+}"#
+                    .to_string(),
                     style: "code".to_string(),
                 },
                 Node::Paragraph {
                     runs: vec![TextRun::new(
                         "You can edit this document using the editor, and the preview will update automatically.",
                         "en",
-                        "paragraph"
+                        "paragraph",
                     )],
                     style: "paragraph".to_string(),
                 },
@@ -832,6 +986,18 @@ fn save_document(document: &PdxDocument, path: Option<&PathBuf>) -> Option<PathB
     Some(path)
 }
 
+fn export_html(document: &PdxDocument) -> Option<()> {
+    let path = rfd::FileDialog::new()
+        .add_filter("HTML", &["html"])
+        .set_file_name(&format!("{}.html", document.metadata.title))
+        .save_file()?;
+
+    let html = export_as_html(document);
+    fs::write(path, html).ok()?;
+
+    Some(())
+}
+
 // ============================================================================
 // UI Setup
 // ============================================================================
@@ -839,22 +1005,26 @@ fn save_document(document: &PdxDocument, path: Option<&PathBuf>) -> Option<PathB
 fn setup_fonts(ctx: &egui::Context) {
     let mut fonts = FontDefinitions::default();
 
-    // Add Arabic font support
     fonts.font_data.insert(
         "arabic".to_owned(),
-        std::sync::Arc::new(egui::FontData::from_static(
-            include_bytes!("../assets/fonts/NotoSansArabic-Regular.ttf")
-        )),
+        std::sync::Arc::new(egui::FontData::from_static(include_bytes!(
+            "../assets/fonts/NotoSansArabic-Regular.ttf"
+        ))),
     );
 
-    // Add Arabic font to proportional family (for general text)
+    fonts.font_data.insert(
+        "default".to_owned(),
+        std::sync::Arc::new(egui::FontData::from_static(include_bytes!(
+            "../assets/fonts/NotoColorEmoji.ttf"
+        ))),
+    );
+
     fonts
         .families
         .entry(FontFamily::Proportional)
         .or_default()
         .insert(0, "arabic".to_owned());
 
-    // Add Arabic font to monospace family (for code)
     fonts
         .families
         .entry(FontFamily::Monospace)
@@ -863,28 +1033,27 @@ fn setup_fonts(ctx: &egui::Context) {
 
     ctx.set_fonts(fonts);
 
-    // Adjust text sizes
     let mut style = (*ctx.style()).clone();
     style.text_styles = [
         (
             egui::TextStyle::Heading,
-            egui::FontId::new(24.0, egui::FontFamily::Proportional),
+            egui::FontId::new(26.0, egui::FontFamily::Proportional),
         ),
         (
             egui::TextStyle::Body,
-            egui::FontId::new(16.0, egui::FontFamily::Proportional),
+            egui::FontId::new(18.0, egui::FontFamily::Proportional),
         ),
         (
             egui::TextStyle::Monospace,
-            egui::FontId::new(14.0, egui::FontFamily::Monospace),
+            egui::FontId::new(15.0, egui::FontFamily::Monospace),
         ),
         (
             egui::TextStyle::Button,
-            egui::FontId::new(14.0, egui::FontFamily::Proportional),
+            egui::FontId::new(16.0, egui::FontFamily::Proportional),
         ),
         (
             egui::TextStyle::Small,
-            egui::FontId::new(12.0, egui::FontFamily::Proportional),
+            egui::FontId::new(14.0, egui::FontFamily::Proportional),
         ),
     ]
     .into();
@@ -897,16 +1066,13 @@ fn setup_fonts(ctx: &egui::Context) {
 
 impl eframe::App for PdxApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Apply theme
         self.theme.apply(ctx);
 
-        // Top menu bar
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.heading("📄 PDX Editor");
                 ui.separator();
 
-                // File menu
                 ui.menu_button("📁 File", |ui| {
                     if ui.button("🆕 New").clicked() {
                         *self = Self::default();
@@ -943,9 +1109,38 @@ impl eframe::App for PdxApp {
                         }
                         ui.close_menu();
                     }
+
+                    ui.separator();
+
+                    ui.menu_button("📤 Export as...", |ui| {
+                        if ui.button("🌐 HTML").clicked() {
+                            if export_html(&self.document).is_some() {
+                                self.status_message = "Exported as HTML".to_string();
+                            }
+                            ui.close_menu();
+                        }
+
+                        if ui.button("📄 PDF").clicked() {
+                            self.status_message =
+                                "PDF export - Use Print (Ctrl+P) to save as PDF".to_string();
+                            ui.close_menu();
+                        }
+
+                        if ui.button("🖼️ Image (PNG)").clicked() {
+                            self.status_message = "Image export - Coming soon".to_string();
+                            ui.close_menu();
+                        }
+                    });
+
+                    ui.separator();
+
+                    if ui.button("🖨️ Print").clicked() {
+                        self.status_message =
+                            "Use Ctrl+P or browser menu to print".to_string();
+                        ui.close_menu();
+                    }
                 });
 
-                // View menu
                 ui.menu_button("👁 View", |ui| {
                     if ui.button("✏️ Edit Mode").clicked() {
                         self.mode = EditorMode::Edit;
@@ -964,7 +1159,7 @@ impl eframe::App for PdxApp {
 
                     ui.label("Zoom:");
                     if ui.button("🔍+ Zoom In").clicked() {
-                        self.zoom_level = (self.zoom_level + 0.1).min(2.0);
+                        self.zoom_level = (self.zoom_level + 0.1).min(2.5);
                     }
                     if ui.button("🔍- Zoom Out").clicked() {
                         self.zoom_level = (self.zoom_level - 0.1).max(0.5);
@@ -974,19 +1169,35 @@ impl eframe::App for PdxApp {
                     }
                 });
 
-                // Theme menu
                 ui.menu_button("🎨 Theme", |ui| {
-                    if ui.selectable_label(self.theme == AppTheme::Light, "☀️ Light").clicked() {
+                    if ui
+                        .selectable_label(self.theme == AppTheme::Light, "☀️ Light")
+                        .clicked()
+                    {
                         self.theme = AppTheme::Light;
                         self.status_message = "Theme changed to Light".to_string();
                         ui.close_menu();
                     }
-                    if ui.selectable_label(self.theme == AppTheme::Dark, "🌙 Dark").clicked() {
+                    if ui
+                        .selectable_label(self.theme == AppTheme::Dark, "🌙 Dark")
+                        .clicked()
+                    {
                         self.theme = AppTheme::Dark;
                         self.status_message = "Theme changed to Dark".to_string();
                         ui.close_menu();
                     }
-                    if ui.selectable_label(self.theme == AppTheme::Sepia, "📜 Sepia").clicked() {
+                    if ui
+                        .selectable_label(self.theme == AppTheme::Midnight, "🌌 Midnight")
+                        .clicked()
+                    {
+                        self.theme = AppTheme::Midnight;
+                        self.status_message = "Theme changed to Midnight".to_string();
+                        ui.close_menu();
+                    }
+                    if ui
+                        .selectable_label(self.theme == AppTheme::Sepia, "📜 Sepia")
+                        .clicked()
+                    {
                         self.theme = AppTheme::Sepia;
                         self.status_message = "Theme changed to Sepia".to_string();
                         ui.close_menu();
@@ -995,14 +1206,16 @@ impl eframe::App for PdxApp {
 
                 ui.separator();
 
-                // Tabs
                 ui.selectable_value(&mut self.active_tab, EditorTab::Editor, "✏️ Editor");
-                ui.selectable_value(&mut self.active_tab, EditorTab::Metadata, "ℹ️ Metadata");
+                ui.selectable_value(
+                    &mut self.active_tab,
+                    EditorTab::Metadata,
+                    "ℹ️ Metadata",
+                );
                 ui.selectable_value(&mut self.active_tab, EditorTab::Styles, "🎨 Styles");
             });
         });
 
-        // Main content
         egui::CentralPanel::default().show(ctx, |ui| match self.active_tab {
             EditorTab::Editor => {
                 self.render_editor_tab(ui);
@@ -1015,7 +1228,6 @@ impl eframe::App for PdxApp {
             }
         });
 
-        // Status bar
         egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label(&self.status_message);
@@ -1086,7 +1298,6 @@ impl PdxApp {
 
             EditorMode::Split => {
                 ui.columns(2, |cols| {
-                    // Editor
                     ScrollArea::vertical()
                         .id_salt("split_edit_scroll")
                         .show(&mut cols[0], |ui| {
@@ -1102,10 +1313,9 @@ impl PdxApp {
                             }
                         });
 
-                    // Preview
-                    ScrollArea::vertical().id_salt("split_preview_scroll").show(
-                        &mut cols[1],
-                        |ui| {
+                    ScrollArea::vertical()
+                        .id_salt("split_preview_scroll")
+                        .show(&mut cols[1], |ui| {
                             ui.heading("Preview");
                             ui.separator();
                             render_node(
@@ -1115,8 +1325,7 @@ impl PdxApp {
                                 self.zoom_level,
                                 &self.theme,
                             );
-                        },
-                    );
+                        });
                 });
             }
         }
@@ -1198,15 +1407,11 @@ impl PdxApp {
     }
 }
 
-// ============================================================================
-// Main Entry Point
-// ============================================================================
-
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1400.0, 800.0])
-            .with_title("PDX Editor - Next Generation Document Format"),
+            .with_title("PDX Editor - Modern Document Format with Arabic Support"),
         ..Default::default()
     };
 

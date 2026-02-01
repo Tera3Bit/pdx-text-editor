@@ -166,6 +166,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arabic_reshaper"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb963411bc62b3888e69ad0d821ac03a3176ec7d74c2096bb5555a4cc419545b"
+
+[[package]]
 name = "arboard"
 version = "3.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2268,14 +2274,16 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "pdx-editor"
-version = "0.1.0"
+version = "1.1.0"
 dependencies = [
+ "arabic_reshaper",
  "chrono",
  "eframe",
  "egui",
  "rfd",
  "serde",
  "serde_json",
+ "unicode-bidi",
 ]
 
 [[package]]
@@ -3070,6 +3078,12 @@ dependencies = [
  "tempfile",
  "winapi",
 ]
+
+[[package]]
+name = "unicode-bidi"
+version = "0.3.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c1cb5db39152898a79168971543b1cb5020dff7fe43c8dc468b0885f5e29df5"
 
 [[package]]
 name = "unicode-ident"
