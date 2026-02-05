@@ -16,17 +16,3 @@ pub fn pdx_text(input: &str) -> String {
 
     bidi.reorder_line(para, 0..shaped.len()).to_string()
 }
-
-/// Detect if text contains Arabic characters
-pub fn is_arabic(text: &str) -> bool {
-    text.chars().any(|c| ('\u{0600}'..='\u{06FF}').contains(&c))
-}
-
-/// Detect text direction
-pub fn detect_direction(text: &str) -> crate::Direction {
-    if is_arabic(text) {
-        crate::Direction::RTL
-    } else {
-        crate::Direction::LTR
-    }
-}

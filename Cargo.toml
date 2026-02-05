@@ -1,29 +1,79 @@
 [package]
 name = "pdx-editor"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2021"
-authors = ["PDX Team"]
+authors = ["TeraBit"]
 description = "Next generation document format - editable, semantic, and multilingual"
+homepage = "https://tera3bit.github.io/pdx-text-editor"
+repository = "https://github.com/Tera3Bit/pdx-text-editor/"
+license = "GNU3"
 
 [dependencies]
-eframe = "0.30"
+eframe = { version = "0.30", features = [
+    "glow",
+    "persistence",
+] } # Added persistence to save app state
 egui = "0.30"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rfd = "0.15"
+# Enhanced Image support
+image = { version = "0.25", default-features = false, features = [
+    "png",
+    "jpeg",
+    "webp",
+] }
+printpdf = { version = "0.7", features = ["embedded_images"] }
 chrono = "0.4"
-unicode-bidi = "0.3" 
+unicode-bidi = "0.3"
 arabic_reshaper = "0.4"
+# Addition: log and env_logger for better debugging in release
+log = "0.4"
+env_logger = "0.11"
 
 [profile.release]
 opt-level = 3
-lto = true
-strip = true
-codegen-units = 1
+lto = "fat"         # Maximize Link Time Optimization
+codegen-units = 1   # Better optimization at the cost of compile time
+panic = "abort"     # Smaller binary size
+strip = "symbols"   # Remove debug symbols automatically
+incremental = false # Ensure clean, optimized build
 
 [package.metadata.packager]
-before-packaging-command = "cargo build --release"
-formats = ["wix", "nsis", "deb", "dmg"]
-# icons = ["icons/32x32.png", "icons/128x128.png"]
 product_name = "PDX Editor"
 identifier = "com.terabit.pdxeditor"
+# Script to run before packaging (ensures everything is fresh)
+before-packaging-command = "cargo build --release"
+# Standard icons for all platforms (Place them in /assets/icons/)
+# icons = [
+#     "assets/icons/32x32.png",
+#     "assets/icons/128x128.png",
+#     "assets/icons/256x256.png",
+#     "assets/icons/512x512.png",
+#     "assets/icons/icon.ico",  
+#     "assets/icons/icon.icns", 
+# ]
+
+# --- Windows Specific (Wix/NSIS) ---
+[package.metadata.packager.windows]
+formats = ["wix", "nsis"]
+# Customizing the Installer
+wix = { language = "en-US", manufacturer = "TeraBit Company" }
+
+# --- Linux Specific (Deb/AppImage) ---
+[package.metadata.packager.linux]
+formats = ["deb", "appimage"]
+categories = ["Office", "TextEditor", "Development"]
+short_description = "Universal Semantic Document Editor"
+long_description = """
+PDX Editor is a high-performance, multilingual document editor 
+supporting advanced PDF exports, RTL languages, and semantic data structures.
+"""
+# Maintainer info for .deb files
+authors = ["TeraBit"]
+depends = ["libx11-6", "libwayland-client0"] # Important for GUI apps
+
+# --- macOS Specific ---
+[package.metadata.packager.macos]
+formats = ["dmg"]
+minimum_system_version = "10.13"
