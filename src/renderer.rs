@@ -25,7 +25,7 @@ pub fn render_node(
             }
         }
 
-        Node::Heading { level, runs, style } => {
+        Node::Heading { level: _, runs, style } => {
             let style_def = styles.styles.get(style).cloned().unwrap_or_default();
             let size = style_def.font_size * zoom;
 
@@ -37,24 +37,26 @@ pub fn render_node(
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                     ui.horizontal_wrapped(|ui| {
                         for run in runs.iter().rev() {
-                            ui.label(
-                                RichText::new(&pdx_text(&run.text))
-                                    .size(size)
-                                    .color(text_color)
-                                    .strong(),
-                            );
+                            let mut rich = RichText::new(&pdx_text(&run.text))
+                                .size(size)
+                                .color(text_color)
+                                .strong();
+                            if run.italic { rich = rich.italics(); }
+                            if run.underline { rich = rich.underline(); }
+                            ui.label(rich);
                         }
                     });
                 });
             } else {
                 ui.horizontal_wrapped(|ui| {
                     for run in runs {
-                        ui.label(
-                            RichText::new(&pdx_text(&run.text))
-                                .size(size)
-                                .color(text_color)
-                                .strong(),
-                        );
+                        let mut rich = RichText::new(&pdx_text(&run.text))
+                            .size(size)
+                            .color(text_color)
+                            .strong();
+                        if run.italic { rich = rich.italics(); }
+                        if run.underline { rich = rich.underline(); }
+                        ui.label(rich);
                     }
                 });
             }
@@ -74,22 +76,26 @@ pub fn render_node(
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                     ui.horizontal_wrapped(|ui| {
                         for run in runs.iter().rev() {
-                            ui.label(
-                                RichText::new(&pdx_text(&run.text))
-                                    .size(size)
-                                    .color(text_color),
-                            );
+                            let mut rich = RichText::new(&pdx_text(&run.text))
+                                .size(size)
+                                .color(text_color);
+                            if run.bold { rich = rich.strong(); }
+                            if run.italic { rich = rich.italics(); }
+                            if run.underline { rich = rich.underline(); }
+                            ui.label(rich);
                         }
                     });
                 });
             } else {
                 ui.horizontal_wrapped(|ui| {
                     for run in runs {
-                        ui.label(
-                            RichText::new(&pdx_text(&run.text))
-                                .size(size)
-                                .color(text_color),
-                        );
+                        let mut rich = RichText::new(&pdx_text(&run.text))
+                            .size(size)
+                            .color(text_color);
+                        if run.bold { rich = rich.strong(); }
+                        if run.italic { rich = rich.italics(); }
+                        if run.underline { rich = rich.underline(); }
+                        ui.label(rich);
                     }
                 });
             }
@@ -105,11 +111,13 @@ pub fn render_node(
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                         ui.horizontal_wrapped(|ui| {
                             for run in item.content.iter().rev() {
-                                ui.label(
-                                    RichText::new(&pdx_text(&run.text))
-                                        .size(16.0 * zoom)
-                                        .color(text_color),
-                                );
+                                let mut rich = RichText::new(&pdx_text(&run.text))
+                                    .size(16.0 * zoom)
+                                    .color(text_color);
+                                if run.bold { rich = rich.strong(); }
+                                if run.italic { rich = rich.italics(); }
+                                if run.underline { rich = rich.underline(); }
+                                ui.label(rich);
                             }
 
                             let marker = if *ordered {
@@ -131,11 +139,13 @@ pub fn render_node(
                         ui.label(RichText::new(marker).size(16.0 * zoom).color(text_color));
 
                         for run in &item.content {
-                            ui.label(
-                                RichText::new(&pdx_text(&run.text))
-                                    .size(16.0 * zoom)
-                                    .color(text_color),
-                            );
+                            let mut rich = RichText::new(&pdx_text(&run.text))
+                                .size(16.0 * zoom)
+                                .color(text_color);
+                            if run.bold { rich = rich.strong(); }
+                            if run.italic { rich = rich.italics(); }
+                            if run.underline { rich = rich.underline(); }
+                            ui.label(rich);
                         }
                     });
                 }

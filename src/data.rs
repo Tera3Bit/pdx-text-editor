@@ -254,6 +254,13 @@ pub struct TextRun {
     pub language: String,
     pub direction: Direction,
     pub style: String,
+    // Rich text formatting
+    #[serde(default)]
+    pub bold: bool,
+    #[serde(default)]
+    pub italic: bool,
+    #[serde(default)]
+    pub underline: bool,
 }
 
 impl TextRun {
@@ -269,6 +276,9 @@ impl TextRun {
             language: language.to_string(),
             direction,
             style: style.to_string(),
+            bold: false,
+            italic: false,
+            underline: false,
         }
     }
 }
@@ -364,7 +374,7 @@ pub fn create_sample_document() -> PdxDocument {
                         },
                         ListItem {
                             content: vec![TextRun::new(
-                                "Comfort theme - optimized for long writing sessions",
+                                "Rich text: **Bold**, *Italic*, __Underline__",
                                 "en",
                                 "paragraph",
                             )],

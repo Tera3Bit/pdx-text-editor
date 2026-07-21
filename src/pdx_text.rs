@@ -11,8 +11,23 @@ pub fn pdx_text(input: &str) -> String {
     let reshaper = ArabicReshaper::new();
     let shaped = reshaper.reshape(input);
 
-    let bidi = BidiInfo::new(&shaped, None);
-    let para = &bidi.paragraphs[0];
+    if shaped.is_empty() {
+        return input.to_string();
+    }
 
-    bidi.reorder_line(para, 0..shaped.len()).to_string()
+    let bidi = BidiInfo::new(&shaped, None);
+
+    // Guard against empty paragraphs (e.g. whitespace-only input)
+    if bidi.paragraphs.is_empty() {
+        return shaped;
+    }
+
+    let para = &bidi.paragraphs[0];
+    let line_range = 0..shaped.len().min(para.range.end);
+
+    if line_range.is_empty() {
+        return shaped;
+    }
+
+    bidi.reorder_line(para, line_range).to_string()
 }
